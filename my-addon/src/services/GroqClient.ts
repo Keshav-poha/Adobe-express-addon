@@ -111,27 +111,43 @@ Important:
   async generateFireflyPrompt(
     trend: string,
     brandContext: BrandData,
-    includeTrendySuggestions: boolean = false
+    includeTrendySuggestions: boolean = false,
+    selectedEvents: string[] = []
   ): Promise<string> {
     try {
-      const trendContext = includeTrendySuggestions
-        ? '\n\nIncorporate January 2026 trending themes: Republic Day (India - patriotic colors), Lohri (harvest festival - warm tones), New Year momentum.'
+      // Build event-specific context
+      const eventDetails: { [key: string]: string } = {
+        'republic-day': 'Republic Day (Jan 26): Patriotic tricolor (saffron, white, green), Ashoka Chakra, unity messaging, "Celebrating 77 years of democracy" hook',
+        'lohri': 'Lohri (Jan 13): Bonfire imagery, warm orange/yellow tones, harvest elements (wheat, mustard fields), Punjabi patterns, "Harvest blessings" hook',
+        'valentines': 'Valentine\'s Day (Feb 14): Romantic red & pink gradients, modern heart motifs, self-love themes, "Love yourself first" narrative',
+        'holi': 'Holi (Mar 14): Vibrant multi-color powder explosions, playful energy, water splash effects, "Colors of joy & togetherness" hook'
+      };
+
+      const eventContext = selectedEvents.length > 0
+        ? '\n\nEvent-Specific Requirements:\n' + selectedEvents.map(id => `- ${eventDetails[id]}`).join('\n')
         : '';
 
-      const prompt = `Generate a detailed, high-fidelity Adobe Firefly image generation prompt for a ${trend} design.
+      const viralContext = includeTrendySuggestions
+        ? '\n\nViral Content Elements to Include:\n- Hook-driven narratives with emotional impact\n- Trending visual transitions (smooth morphs, dynamic reveals)\n- Cinematic lighting and depth effects\n- Text overlays with bold, readable typography\n- Color grading inspired by top Instagram/TikTok trends\n- Motion-ready composition (asymmetric balance, rule of thirds)\n- Trendy visual scripts: "POV", "Before/After", "Tutorial aesthetic"\n- Audio-visual sync considerations (beat drops, rhythm patterns)'
+        : '';
+
+      const prompt = `Generate a detailed, high-fidelity Adobe Firefly image generation prompt for a ${trend} design that will perform well on social media platforms.
 
 Brand Context:
 - Colors: ${brandContext.primaryColors.join(', ')}
 - Brand Voice: ${brandContext.brandVoice}
 - Guidelines: ${brandContext.designGuidelines.join('; ')}
-${trendContext}
+${eventContext}${viralContext}
 
 Create a prompt that:
-1. Incorporates the brand colors naturally
+1. Incorporates the brand colors naturally and strategically
 2. Reflects the brand voice and guidelines
 3. Describes specific visual elements, composition, and style
-4. Is detailed enough for high-quality image generation
-5. Is under 200 words
+4. Includes viral-worthy hooks and trending visual patterns
+5. Is optimized for social media engagement
+6. Specifies lighting, perspective, and mood
+7. Is detailed enough for high-quality image generation
+8. Is under 250 words
 
 Return only the prompt text, no additional explanation.`;
 
@@ -144,7 +160,7 @@ Return only the prompt text, no additional explanation.`;
         ],
         model: this.TEXT_MODEL,
         temperature: 0.7,
-        max_tokens: 512,
+        max_tokens: 650,
       });
 
       return completion.choices[0]?.message?.content || 'Modern design with vibrant colors';

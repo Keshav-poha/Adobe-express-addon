@@ -4,9 +4,23 @@ import { groqClient } from '../../services/GroqClient';
 
 const TrendEngine: React.FC = () => {
   const { brandData, hasBrandData } = useBrand();
-  const [trendySuggestions, setTrendySuggestions] = useState(false);
-  const [generatingPrompt, setGeneratingPrompt] = useState<string | null>(null);
+  const [selectedTrend, setSelectedTrend] = useState<string>('');
+  const [selectedViralStyle, setSelectedViralStyle] = useState<string>('');
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
+
+  const viralStyles = [
+    { id: 'none', name: 'No Viral Style', desc: 'Standard design without viral elements' },
+    { id: 'republic-day', name: '🇮🇳 Republic Day', desc: 'Patriotic tricolor, unity messaging, "Celebrating 77 years of democracy"' },
+    { id: 'lohri', name: '🔥 Lohri Festival', desc: 'Bonfire imagery, harvest celebration, warm tones' },
+    { id: 'valentines', name: '💝 Valentine\'s Day', desc: 'Romantic themes, self-love narrative, modern hearts' },
+    { id: 'holi', name: '🎨 Holi Festival', desc: 'Color explosions, playful energy, togetherness hook' },
+    { id: 'pov-story', name: '📱 POV Story', desc: 'Point-of-view narrative, first-person perspective, relatable hooks' },
+    { id: 'before-after', name: '⚡ Before/After', desc: 'Transformation reveal, side-by-side comparison, dramatic contrast' },
+    { id: 'tutorial', name: '🎓 Tutorial Aesthetic', desc: 'Step-by-step visual, educational tone, clear progression' },
+    { id: 'cinematic', name: '🎬 Cinematic', desc: 'Film-grade lighting, dramatic depth, movie poster vibes' },
+    { id: 'trending-audio', name: '🎵 Audio-First', desc: 'Beat-synced visuals, rhythm patterns, music video style' },
+  ];
 
   const trends = [
     { 
@@ -47,27 +61,36 @@ const TrendEngine: React.FC = () => {
     },
   ];
 
-  const handleGeneratePrompt = async (trendTitle: string) => {
+  const handleGeneratePrompt = async () => {
     if (!hasBrandData) {
       alert('⚠️ Please extract brand data first in the Brand Brain tab!');
       return;
     }
 
-    setGeneratingPrompt(trendTitle);
+    if (!selectedTrend) {
+      alert('⚠️ Please select a trend style first!');
+      return;
+    }
+
+    setGeneratingPrompt(true);
     setGeneratedPrompt(null);
 
     try {
+      const trendName = trends.find(t => t.id === selectedTrend)?.title || selectedTrend;
+      const viralStyleIds = selectedViralStyle ? [selectedViralStyle] : [];
+      
       const prompt = await groqClient.generateFireflyPrompt(
-        trendTitle,
+        trendName,
         brandData,
-        trendySuggestions
+        selectedViralStyle !== 'none' && selectedViralStyle !== '',
+        viralStyleIds
       );
       setGeneratedPrompt(prompt);
     } catch (error) {
       console.error('Error generating prompt:', error);
       alert('Failed to generate prompt. Please try again.');
     } finally {
-      setGeneratingPrompt(null);
+      setGeneratingPrompt(false);
     }
   };
 
@@ -133,104 +156,121 @@ const TrendEngine: React.FC = () => {
         </div>
       )}
 
-      {/* Trendy Suggestions Toggle */}
+      {/* Trend Selection Dropdown */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--spectrum-spacing-200)',
-        marginBottom: 'var(--spectrum-spacing-400)',
-        padding: 'var(--spectrum-spacing-300)',
-        backgroundColor: 'var(--spectrum-background-layer-2)',
-        borderRadius: 'var(--spectrum-corner-radius-100)',
-        border: '1px solid var(--spectrum-border-color)',
-      }}>
-        <input
-          type="checkbox"
-          id="trendy-toggle"
-          checked={trendySuggestions}
-          onChange={(e) => setTrendySuggestions(e.target.checked)}
-          style={{
-            width: '18px',
-            height: '18px',
-            cursor: 'pointer',
-            accentColor: '#FA0',
-          }}
-        />
-        <label 
-          htmlFor="trendy-toggle"
-          style={{ 
-            fontSize: 'var(--spectrum-body-text-size)',
-            color: 'var(--spectrum-body-color)',
-            cursor: 'pointer',
-            margin: 0,
-            userSelect: 'none'
-          }}
-        >
-          🎉 Include January 2026 Trends (Republic Day, Lohri, New Year)
-        </label>
-      </div>
-
-      {/* Generation Agenda Buttons */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
-        gap: 'var(--spectrum-spacing-300)',
         marginBottom: 'var(--spectrum-spacing-400)'
       }}>
-        {trends.map((trend) => {
-          const isGenerating = generatingPrompt === trend.title;
-          
-          return (
-            <button
-              key={trend.id}
-              onClick={() => handleGeneratePrompt(trend.title)}
-              disabled={!hasBrandData || isGenerating}
-              style={{
-                padding: 'var(--spectrum-spacing-300)',
-                backgroundColor: isGenerating ? '#FA0' : 'var(--spectrum-background-layer-2)',
-                border: `2px solid ${isGenerating ? '#FA0' : 'var(--spectrum-border-color)'}`,
-                borderRadius: 'var(--spectrum-corner-radius-100)',
-                cursor: hasBrandData && !isGenerating ? 'pointer' : 'not-allowed',
-                transition: 'all 0.13s ease-out',
-                textAlign: 'left',
-                opacity: !hasBrandData ? 0.5 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (hasBrandData && !isGenerating) {
-                  e.currentTarget.style.borderColor = '#FA0';
-                  e.currentTarget.style.backgroundColor = 'var(--spectrum-background-layer-1)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (hasBrandData && !isGenerating) {
-                  e.currentTarget.style.borderColor = 'var(--spectrum-border-color)';
-                  e.currentTarget.style.backgroundColor = 'var(--spectrum-background-layer-2)';
-                }
-              }}
-            >
-              <div style={{ fontSize: '24px', marginBottom: 'var(--spectrum-spacing-100)' }}>
-                {isGenerating ? '⏳' : trend.icon}
-              </div>
-              <h3 style={{ 
-                fontSize: 'var(--spectrum-font-size-100)', 
-                fontWeight: 700, 
-                color: 'var(--spectrum-heading-color)', 
-                margin: '0 0 var(--spectrum-spacing-75) 0'
-              }}>
-                {trend.title}
-              </h3>
-              <p style={{ 
-                fontSize: 'var(--spectrum-body-s-text-size)',
-                color: 'var(--spectrum-text-secondary)',
-                margin: 0,
-                lineHeight: 1.4
-              }}>
-                {isGenerating ? 'Generating...' : trend.desc}
-              </p>
-            </button>
-          );
-        })}
+        <label
+          htmlFor="trend-select"
+          style={{
+            display: 'block',
+            fontSize: 'var(--spectrum-body-text-size)',
+            fontWeight: 600,
+            color: 'var(--spectrum-heading-color)',
+            marginBottom: 'var(--spectrum-spacing-100)'
+          }}
+        >
+          Select Trend Style
+        </label>
+        <select
+          id="trend-select"
+          value={selectedTrend}
+          onChange={(e) => setSelectedTrend(e.target.value)}
+          style={{
+            width: '100%',
+            padding: 'var(--spectrum-spacing-200)',
+            fontSize: 'var(--spectrum-body-text-size)',
+            fontFamily: 'adobe-clean, sans-serif',
+            backgroundColor: 'var(--spectrum-background-layer-1)',
+            color: 'var(--spectrum-body-color)',
+            border: '1px solid var(--spectrum-border-color)',
+            borderRadius: 'var(--spectrum-corner-radius-100)',
+            cursor: 'pointer',
+            outline: 'none',
+          }}
+        >
+          <option value="">-- Choose a trend --</option>
+          {trends.map((trend) => (
+            <option key={trend.id} value={trend.id}>
+              {trend.icon} {trend.title} - {trend.desc}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Viral Style Selection Dropdown */}
+      <div style={{
+        marginBottom: 'var(--spectrum-spacing-400)'
+      }}>
+        <label
+          htmlFor="viral-select"
+          style={{
+            display: 'block',
+            fontSize: 'var(--spectrum-body-text-size)',
+            fontWeight: 600,
+            color: 'var(--spectrum-heading-color)',
+            marginBottom: 'var(--spectrum-spacing-100)'
+          }}
+        >
+          Select Viral Style (Optional)
+        </label>
+        <select
+          id="viral-select"
+          value={selectedViralStyle}
+          onChange={(e) => setSelectedViralStyle(e.target.value)}
+          style={{
+            width: '100%',
+            padding: 'var(--spectrum-spacing-200)',
+            fontSize: 'var(--spectrum-body-text-size)',
+            fontFamily: 'adobe-clean, sans-serif',
+            backgroundColor: 'var(--spectrum-background-layer-1)',
+            color: 'var(--spectrum-body-color)',
+            border: '1px solid var(--spectrum-border-color)',
+            borderRadius: 'var(--spectrum-corner-radius-100)',
+            cursor: 'pointer',
+            outline: 'none',
+          }}
+        >
+          {viralStyles.map((style) => (
+            <option key={style.id} value={style.id}>
+              {style.name} - {style.desc}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Generate Button */}
+      <button
+        onClick={handleGeneratePrompt}
+        disabled={!hasBrandData || generatingPrompt || !selectedTrend}
+        style={{
+          width: '100%',
+          padding: 'var(--spectrum-spacing-300)',
+          fontSize: 'var(--spectrum-font-size-200)',
+          fontWeight: 700,
+          fontFamily: 'adobe-clean, sans-serif',
+          backgroundColor: generatingPrompt ? '#FFB800' : '#FA0',
+          color: '#000',
+          border: 'none',
+          borderRadius: 'var(--spectrum-corner-radius-100)',
+          cursor: hasBrandData && !generatingPrompt && selectedTrend ? 'pointer' : 'not-allowed',
+          transition: 'all 0.13s ease-out',
+          opacity: !hasBrandData || !selectedTrend ? 0.5 : 1,
+          marginBottom: 'var(--spectrum-spacing-400)'
+        }}
+        onMouseEnter={(e) => {
+          if (hasBrandData && !generatingPrompt && selectedTrend) {
+            e.currentTarget.style.backgroundColor = '#FFB800';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (hasBrandData && !generatingPrompt && selectedTrend) {
+            e.currentTarget.style.backgroundColor = '#FA0';
+          }
+        }}
+      >
+        {generatingPrompt ? '⏳ Generating Prompt...' : '✨ Generate Firefly Prompt'}
+      </button>
 
       {/* Generated Prompt Display */}
       {generatedPrompt && (
