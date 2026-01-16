@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBrand } from '../../context/BrandContext';
 import { groqClient, VisionAnalysis } from '../../services/GroqClient';
-import { Search, BarChart3, Lightbulb, Sparkles, Upload } from 'lucide-react';
+import { Search, BarChart3, Lightbulb, Sparkles, Upload, Lock, Crown } from 'lucide-react';
 import { ProgressCircle } from './LoadingComponents';
 import addOnUISdk from "https://express.adobe.com/static/add-on-sdk/sdk.js";
 import { useLanguage } from '../../context/LanguageContext';
@@ -12,8 +12,107 @@ const DesignAuditor: React.FC = () => {
   const [auditing, setAuditing] = useState(false);
   const [analysis, setAnalysis] = useState<VisionAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
+  const [checkingPremium, setCheckingPremium] = useState(true);
+
+  // Check premium status on component mount
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      try {
+        const premium = await addOnUISdk.app.currentUser.isPremiumUser();
+        setIsPremiumUser(premium);
+      } catch (error) {
+        console.error('Error checking premium status:', error);
+        // Default to non-premium if check fails
+        setIsPremiumUser(false);
+      } finally {
+        setCheckingPremium(false);
+      }
+    };
+
+    checkPremiumStatus();
+  }, []);
+
+  const handleUpgrade = async () => {
+    try {
+      const hasUpgraded = await addOnUISdk.app.startPremiumUpgradeIfFreeUser();
+      if (hasUpgraded) {
+        // User upgraded successfully, update premium status
+        setIsPremiumUser(true);
+      }
+    } catch (error) {
+      console.error('Error during upgrade flow:', error);
+    }
+  };
+
+  // Helper function to resize image to reduce payload size
+  const resizeImage = async (blob: Blob, maxWidth: number = 1024): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+      
+      img.onload = () => {
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        // Create canvas and resize
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 with quality compression
+        canvas.toBlob(
+          (resizedBlob) => {
+            if (!resizedBlob) {
+              reject(new Error('Failed to create resized blob'));
+              return;
+            }
+            
+            // Convert blob to base64
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64 = (reader.result as string).split(',')[1];
+              URL.revokeObjectURL(url);
+              resolve(base64);
+            };
+            reader.onerror = () => reject(new Error('Failed to read resized image'));
+            reader.readAsDataURL(resizedBlob);
+          },
+          'image/jpeg',
+          0.85 // 85% quality for good balance between quality and size
+        );
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load image'));
+      };
+      
+      img.src = url;
+    });
+  };
 
   const runAudit = async () => {
+    // Check premium status before running audit
+    if (!isPremiumUser) {
+      setError('Design Audit is a premium feature. Please upgrade to Adobe Express Premium to use this feature.');
+      return;
+    }
+    
     if (!hasBrandData) {
       setError(t('extractFirst'));
       return;
@@ -37,18 +136,8 @@ const DesignAuditor: React.FC = () => {
       const rendition = renditions[0];
       const blob = rendition.blob;
 
-      // Convert blob to base64 (chunk processing to avoid stack overflow)
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Process in chunks to avoid "Maximum call stack size exceeded"
-      let binaryString = '';
-      const chunkSize = 8192; // Process 8KB at a time
-      for (let i = 0; i < uint8Array.length; i += chunkSize) {
-        const chunk = uint8Array.subarray(i, i + chunkSize);
-        binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-      }
-      const base64 = btoa(binaryString);
+      // Resize and compress image to avoid 413 errors
+      const base64 = await resizeImage(blob, 1024);
 
       // Check if page has any content
       if (!base64 || base64.length < 100) {
@@ -77,6 +166,8 @@ const DesignAuditor: React.FC = () => {
           errorMessage = error.message;
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('413') || error.message.includes('too large') || error.message.includes('request_too_large')) {
+          errorMessage = 'Design is too complex to analyze. Try simplifying your design or analyzing a smaller section.';
         } else {
           errorMessage = error.message;
         }
@@ -114,6 +205,127 @@ const DesignAuditor: React.FC = () => {
   return (
     <div style={{ padding: 'var(--spectrum-spacing-400)', fontFamily: 'adobe-clean, sans-serif' }}>
 
+      {/* Loading Premium Status */}
+      {checkingPremium && (
+        <div style={{ textAlign: 'center', padding: 'var(--spectrum-spacing-600)' }}>
+          <ProgressCircle size="medium" label="Checking access..." />
+        </div>
+      )}
+
+      {/* Premium Paywall */}
+      {!checkingPremium && !isPremiumUser && (
+        <div style={{
+          padding: 'var(--spectrum-spacing-600)',
+          backgroundColor: 'var(--spectrum-background-layer-2)',
+          borderRadius: 'var(--spectrum-corner-radius-200)',
+          border: '2px solid #FA0',
+          textAlign: 'center',
+          marginBottom: 'var(--spectrum-spacing-400)',
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            backgroundColor: '#4069FD',
+            marginBottom: 'var(--spectrum-spacing-400)',
+          }}>
+            <Crown size={32} color="#fff" />
+          </div>
+          
+          <h2 className="spectrum-heading-l" style={{
+            margin: '0 0 var(--spectrum-spacing-200) 0',
+            color: 'var(--spectrum-heading-color)',
+          }}>
+            Premium Feature
+          </h2>
+          
+          <p style={{
+            fontSize: 'var(--spectrum-body-text-size)',
+            color: 'var(--spectrum-body-color)',
+            lineHeight: 1.6,
+            marginBottom: 'var(--spectrum-spacing-400)',
+            maxWidth: '400px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}>
+            Design Audit is a premium feature that uses advanced AI to analyze your designs against brand guidelines and provide actionable feedback.
+          </p>
+
+          <div style={{
+            backgroundColor: 'var(--spectrum-background-layer-1)',
+            borderRadius: 'var(--spectrum-corner-radius-100)',
+            padding: 'var(--spectrum-spacing-400)',
+            marginBottom: 'var(--spectrum-spacing-500)',
+            textAlign: 'left',
+          }}>
+            <p style={{
+              fontSize: 'var(--spectrum-body-s-text-size)',
+              color: 'var(--spectrum-body-color)',
+              fontWeight: 600,
+              marginBottom: 'var(--spectrum-spacing-200)',
+            }}>
+              What you'll get with Premium:
+            </p>
+            <ul style={{
+              margin: 0,
+              paddingLeft: 'var(--spectrum-spacing-400)',
+              fontSize: 'var(--spectrum-body-s-text-size)',
+              color: 'var(--spectrum-body-color)',
+              lineHeight: 1.8,
+            }}>
+              <li>AI-powered design analysis</li>
+              <li>Brand consistency scoring</li>
+              <li>Detailed recommendations</li>
+              <li>Accessibility insights</li>
+              <li>Typography & spacing evaluation</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={handleUpgrade}
+            style={{
+              padding: 'var(--spectrum-spacing-300) var(--spectrum-spacing-600)',
+              fontSize: 'var(--spectrum-font-size-200)',
+              fontWeight: 700,
+              fontFamily: 'adobe-clean, sans-serif',
+              backgroundColor: '#4069FD',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 'var(--spectrum-corner-radius-100)',
+              cursor: 'pointer',
+              transition: 'all 0.13s ease-out',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 'var(--spectrum-spacing-200)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#5078FE';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#4069FD';
+            }}
+          >
+            <Crown size={18} />
+            Upgrade to Premium
+          </button>
+
+          <p style={{
+            fontSize: 'var(--spectrum-body-xs-text-size)',
+            color: 'var(--spectrum-gray-600)',
+            marginTop: 'var(--spectrum-spacing-300)',
+            marginBottom: 0,
+          }}>
+            Unlock all premium features with Adobe Express Premium
+          </p>
+        </div>
+      )}
+
+      {/* Main Content - Only show if premium user */}
+      {!checkingPremium && isPremiumUser && (
+        <>
       {/* Error Display */}
       {error && (
         <div style={{
@@ -395,6 +607,8 @@ const DesignAuditor: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   );
