@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBrand } from '../../context/BrandContext';
 import { groqClient } from '../../services/GroqClient';
+import { TrendingUp, Sparkles, Copy, Palette } from 'lucide-react';
 
 const TrendEngine: React.FC = () => {
   const { brandData, hasBrandData } = useBrand();
@@ -11,64 +12,58 @@ const TrendEngine: React.FC = () => {
 
   const viralStyles = [
     { id: 'none', name: 'No Viral Style', desc: 'Standard design without viral elements' },
-    { id: 'republic-day', name: '🇮🇳 Republic Day', desc: 'Patriotic tricolor, unity messaging, "Celebrating 77 years of democracy"' },
-    { id: 'lohri', name: '🔥 Lohri Festival', desc: 'Bonfire imagery, harvest celebration, warm tones' },
-    { id: 'valentines', name: '💝 Valentine\'s Day', desc: 'Romantic themes, self-love narrative, modern hearts' },
-    { id: 'holi', name: '🎨 Holi Festival', desc: 'Color explosions, playful energy, togetherness hook' },
-    { id: 'pov-story', name: '📱 POV Story', desc: 'Point-of-view narrative, first-person perspective, relatable hooks' },
-    { id: 'before-after', name: '⚡ Before/After', desc: 'Transformation reveal, side-by-side comparison, dramatic contrast' },
-    { id: 'tutorial', name: '🎓 Tutorial Aesthetic', desc: 'Step-by-step visual, educational tone, clear progression' },
-    { id: 'cinematic', name: '🎬 Cinematic', desc: 'Film-grade lighting, dramatic depth, movie poster vibes' },
-    { id: 'trending-audio', name: '🎵 Audio-First', desc: 'Beat-synced visuals, rhythm patterns, music video style' },
+    { id: 'republic-day', name: 'Republic Day', desc: 'Patriotic tricolor, unity messaging, "Celebrating 77 years of democracy"' },
+    { id: 'lohri', name: 'Lohri Festival', desc: 'Bonfire imagery, harvest celebration, warm tones' },
+    { id: 'valentines', name: 'Valentine\'s Day', desc: 'Romantic themes, self-love narrative, modern hearts' },
+    { id: 'holi', name: 'Holi Festival', desc: 'Color explosions, playful energy, togetherness hook' },
+    { id: 'pov-story', name: 'POV Story', desc: 'Point-of-view narrative, first-person perspective, relatable hooks' },
+    { id: 'before-after', name: 'Before/After', desc: 'Transformation reveal, side-by-side comparison, dramatic contrast' },
+    { id: 'tutorial', name: 'Tutorial Aesthetic', desc: 'Step-by-step visual, educational tone, clear progression' },
+    { id: 'cinematic', name: 'Cinematic', desc: 'Film-grade lighting, dramatic depth, movie poster vibes' },
+    { id: 'trending-audio', name: 'Audio-First', desc: 'Beat-synced visuals, rhythm patterns, music video style' },
   ];
 
   const trends = [
     { 
       id: 'minimalist', 
       title: 'Minimalist', 
-      desc: 'Clean, simple designs with plenty of white space',
-      icon: '✨'
+      desc: 'Clean, simple designs with plenty of white space'
     },
     { 
       id: 'bold-typography', 
       title: 'Bold Typography', 
-      desc: 'Make a statement with large, impactful text',
-      icon: '🔤'
+      desc: 'Make a statement with large, impactful text'
     },
     { 
       id: 'gradient', 
       title: 'Gradient Fusion', 
-      desc: 'Modern color blends and smooth transitions',
-      icon: '🌈'
+      desc: 'Modern color blends and smooth transitions'
     },
     { 
       id: 'vintage', 
       title: 'Vintage Revival', 
-      desc: 'Retro aesthetics with a modern twist',
-      icon: '📻'
+      desc: 'Retro aesthetics with a modern twist'
     },
     { 
       id: 'abstract', 
       title: 'Abstract Art', 
-      desc: 'Creative shapes and experimental compositions',
-      icon: '🎨'
+      desc: 'Creative shapes and experimental compositions'
     },
     { 
       id: '3d', 
       title: '3D Elements', 
-      desc: 'Depth and dimension with realistic renders',
-      icon: '🧊'
+      desc: 'Depth and dimension with realistic renders'
     },
   ];
 
   const handleGeneratePrompt = async () => {
     if (!hasBrandData) {
-      alert('⚠️ Please extract brand data first in the Brand Brain tab!');
+      alert('Please extract brand data first in the Brand Brain tab!');
       return;
     }
 
     if (!selectedTrend) {
-      alert('⚠️ Please select a trend style first!');
+      alert('Please select a trend style first!');
       return;
     }
 
@@ -97,29 +92,12 @@ const TrendEngine: React.FC = () => {
   const copyToClipboard = () => {
     if (generatedPrompt) {
       navigator.clipboard.writeText(generatedPrompt);
-      alert('✅ Prompt copied to clipboard!');
+      alert('Prompt copied to clipboard!');
     }
   };
 
   return (
     <div style={{ padding: 'var(--spectrum-spacing-400)', fontFamily: 'adobe-clean, sans-serif' }}>
-      <h2 style={{ 
-        fontSize: 'var(--spectrum-heading-xl-text-size)', 
-        fontWeight: 700,
-        color: 'var(--spectrum-heading-color)',
-        margin: '0 0 var(--spectrum-spacing-200) 0'
-      }}>
-        🚀 Trend Engine
-      </h2>
-      <p style={{ 
-        fontSize: 'var(--spectrum-body-s-text-size)',
-        color: 'var(--spectrum-body-color)',
-        marginBottom: 'var(--spectrum-spacing-400)',
-        lineHeight: 1.6
-      }}>
-        Generate Adobe Firefly prompts based on trending design styles and your brand identity.
-      </p>
-
       {/* Brand Colors Display */}
       {hasBrandData && (
         <div style={{
@@ -133,8 +111,12 @@ const TrendEngine: React.FC = () => {
             fontSize: 'var(--spectrum-heading-m-text-size)',
             fontWeight: 600,
             color: 'var(--spectrum-heading-color)',
-            margin: '0 0 var(--spectrum-spacing-200) 0'
+            margin: '0 0 var(--spectrum-spacing-200) 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spectrum-spacing-100)'
           }}>
+            <Palette size={18} color="#00719f" />
             Using Your Brand Colors:
           </h3>
           <div style={{ display: 'flex', gap: 'var(--spectrum-spacing-100)' }}>
@@ -192,7 +174,7 @@ const TrendEngine: React.FC = () => {
           <option value="">-- Choose a trend --</option>
           {trends.map((trend) => (
             <option key={trend.id} value={trend.id}>
-              {trend.icon} {trend.title} - {trend.desc}
+              {trend.title} - {trend.desc}
             </option>
           ))}
         </select>
@@ -249,8 +231,8 @@ const TrendEngine: React.FC = () => {
           fontSize: 'var(--spectrum-font-size-200)',
           fontWeight: 700,
           fontFamily: 'adobe-clean, sans-serif',
-          backgroundColor: generatingPrompt ? '#FFB800' : '#FA0',
-          color: '#000',
+          backgroundColor: generatingPrompt ? 'var(--spectrum-gray-400)' : '#4069FD',
+          color: '#fff',
           border: 'none',
           borderRadius: 'var(--spectrum-corner-radius-100)',
           cursor: hasBrandData && !generatingPrompt && selectedTrend ? 'pointer' : 'not-allowed',
@@ -260,16 +242,23 @@ const TrendEngine: React.FC = () => {
         }}
         onMouseEnter={(e) => {
           if (hasBrandData && !generatingPrompt && selectedTrend) {
-            e.currentTarget.style.backgroundColor = '#FFB800';
+            e.currentTarget.style.backgroundColor = '#5078FE';
           }
         }}
         onMouseLeave={(e) => {
           if (hasBrandData && !generatingPrompt && selectedTrend) {
-            e.currentTarget.style.backgroundColor = '#FA0';
+            e.currentTarget.style.backgroundColor = '#4069FD';
           }
         }}
       >
-        {generatingPrompt ? '⏳ Generating Prompt...' : '✨ Generate Firefly Prompt'}
+        {generatingPrompt ? (
+          <>Generating Prompt...</>
+        ) : (
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <Sparkles size={18} />
+            Generate Firefly Prompt
+          </span>
+        )}
       </button>
 
       {/* Generated Prompt Display */}
@@ -290,9 +279,13 @@ const TrendEngine: React.FC = () => {
               fontSize: 'var(--spectrum-heading-l-text-size)',
               fontWeight: 700,
               color: 'var(--spectrum-heading-color)',
-              margin: 0
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spectrum-spacing-100)'
             }}>
-              ✨ Generated Firefly Prompt
+              <Sparkles size={20} color="#00719f" />
+              Generated Firefly Prompt
             </h3>
             <button
               onClick={copyToClipboard}
@@ -301,21 +294,24 @@ const TrendEngine: React.FC = () => {
                 fontSize: 'var(--spectrum-font-size-75)',
                 fontWeight: 600,
                 fontFamily: 'adobe-clean, sans-serif',
-                backgroundColor: '#FA0',
-                color: '#000',
+                backgroundColor: '#4069FD',
+                color: '#fff',
                 border: 'none',
                 borderRadius: 'var(--spectrum-corner-radius-100)',
                 cursor: 'pointer',
                 transition: 'all 0.13s ease-out',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#FFB800';
+                e.currentTarget.style.backgroundColor = '#5078FE';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#FA0';
+                e.currentTarget.style.backgroundColor = '#4069FD';
               }}
             >
-              📋 Copy
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Copy size={14} />
+                Copy
+              </span>
             </button>
           </div>
           
@@ -341,7 +337,7 @@ const TrendEngine: React.FC = () => {
             color: 'var(--spectrum-text-secondary)',
             fontStyle: 'italic'
           }}>
-            💡 Copy this prompt and paste it into Adobe Firefly to generate your design!
+            Copy this prompt and paste it into Adobe Firefly to generate your design!
           </p>
         </div>
       )}
@@ -359,7 +355,7 @@ const TrendEngine: React.FC = () => {
             fontSize: 'var(--spectrum-body-text-size)',
             color: 'var(--spectrum-text-secondary)'
           }}>
-            ℹ️ Extract brand data in the <strong>Brand Brain</strong> tab first to enable prompt generation.
+            Extract brand data in the <strong>Brand Brain</strong> tab first to enable prompt generation.
           </p>
         </div>
       )}

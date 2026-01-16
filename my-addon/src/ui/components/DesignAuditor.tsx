@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBrand } from '../../context/BrandContext';
 import { groqClient, VisionAnalysis } from '../../services/GroqClient';
+import { Search, BarChart3, Lightbulb, Sparkles, Upload } from 'lucide-react';
 import addOnUISdk from "https://new.express.adobe.com/static/add-on-sdk/sdk.js";
 
 const DesignAuditor: React.FC = () => {
@@ -82,23 +83,6 @@ const DesignAuditor: React.FC = () => {
 
   return (
     <div style={{ padding: 'var(--spectrum-spacing-400)', fontFamily: 'adobe-clean, sans-serif' }}>
-      <h2 style={{ 
-        fontSize: 'var(--spectrum-heading-xl-text-size)', 
-        fontWeight: 700,
-        color: 'var(--spectrum-heading-color)',
-        margin: '0 0 var(--spectrum-spacing-200) 0'
-      }}>
-        🔍 Design Auditor
-      </h2>
-      <p style={{ 
-        fontSize: 'var(--spectrum-body-s-text-size)',
-        color: 'var(--spectrum-body-color)',
-        marginBottom: 'var(--spectrum-spacing-400)',
-        lineHeight: 1.6
-      }}>
-        Analyze your design for consistency, accessibility, and brand alignment using AI vision.
-      </p>
-
       {/* Error Display */}
       {error && (
         <div style={{
@@ -113,7 +97,7 @@ const DesignAuditor: React.FC = () => {
             fontSize: 'var(--spectrum-body-s-text-size)',
             color: 'var(--spectrum-red-900)'
           }}>
-            ⚠️ {error}
+            {error}
           </p>
         </div>
       )}
@@ -177,8 +161,8 @@ const DesignAuditor: React.FC = () => {
           fontSize: 'var(--spectrum-font-size-200)',
           fontWeight: 700,
           fontFamily: 'adobe-clean, sans-serif',
-          backgroundColor: auditing ? 'var(--spectrum-gray-400)' : '#FA0',
-          color: '#000',
+          backgroundColor: auditing ? 'var(--spectrum-gray-400)' : '#4069FD',
+          color: '#fff',
           border: 'none',
           borderRadius: 'var(--spectrum-corner-radius-100)',
           cursor: !hasBrandData || auditing ? 'not-allowed' : 'pointer',
@@ -188,16 +172,23 @@ const DesignAuditor: React.FC = () => {
         }}
         onMouseEnter={(e) => {
           if (hasBrandData && !auditing) {
-            e.currentTarget.style.backgroundColor = '#FFB800';
+            e.currentTarget.style.backgroundColor = '#5078FE';
           }
         }}
         onMouseLeave={(e) => {
           if (hasBrandData && !auditing) {
-            e.currentTarget.style.backgroundColor = '#FA0';
+            e.currentTarget.style.backgroundColor = '#4069FD';
           }
         }}
       >
-        {auditing ? '⏳ Analyzing Design...' : '🚀 Run Design Audit'}
+        {auditing ? (
+          <>Analyzing Design...</>
+        ) : (
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <Search size={18} />
+            Run Design Audit
+          </span>
+        )}
       </button>
 
       {/* Analysis Results */}
@@ -257,9 +248,13 @@ const DesignAuditor: React.FC = () => {
               fontSize: 'var(--spectrum-heading-l-text-size)',
               fontWeight: 700,
               color: 'var(--spectrum-heading-color)',
-              margin: '0 0 var(--spectrum-spacing-200) 0'
+              margin: '0 0 var(--spectrum-spacing-200) 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spectrum-spacing-100)'
             }}>
-              📊 Detailed Metrics
+              <BarChart3 size={20} color="#00719f" />
+              Detailed Metrics
             </h3>
             {metrics.map((metric, index) => (
               <div
@@ -318,9 +313,13 @@ const DesignAuditor: React.FC = () => {
                 fontSize: 'var(--spectrum-heading-l-text-size)',
                 fontWeight: 700,
                 color: 'var(--spectrum-heading-color)',
-                margin: '0 0 var(--spectrum-spacing-200) 0'
+                margin: '0 0 var(--spectrum-spacing-200) 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spectrum-spacing-100)'
               }}>
-                💡 Feedback
+                <Lightbulb size={20} color="#00719f" />
+                Feedback
               </h3>
               <ul style={{ 
                 margin: 0,
@@ -345,9 +344,13 @@ const DesignAuditor: React.FC = () => {
                 fontSize: 'var(--spectrum-heading-l-text-size)',
                 fontWeight: 700,
                 color: 'var(--spectrum-heading-color)',
-                margin: '0 0 var(--spectrum-spacing-200) 0'
+                margin: '0 0 var(--spectrum-spacing-200) 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spectrum-spacing-100)'
               }}>
-                ✨ Recommendations
+                <Sparkles size={20} color="#00719f" />
+                Recommendations
               </h3>
               <ul style={{ 
                 margin: 0,
@@ -364,24 +367,6 @@ const DesignAuditor: React.FC = () => {
               </ul>
             </div>
           )}
-        </div>
-      )}
-
-      {!hasBrandData && (
-        <div style={{
-          padding: 'var(--spectrum-spacing-400)',
-          backgroundColor: 'var(--spectrum-gray-100)',
-          borderRadius: 'var(--spectrum-corner-radius-100)',
-          border: '1px solid var(--spectrum-border-color)',
-          textAlign: 'center'
-        }}>
-          <p style={{
-            margin: 0,
-            fontSize: 'var(--spectrum-body-text-size)',
-            color: 'var(--spectrum-text-secondary)'
-          }}>
-            ℹ️ Extract brand data in the <strong>Brand Brain</strong> tab first to enable design auditing.
-          </p>
         </div>
       )}
     </div>

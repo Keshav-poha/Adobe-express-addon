@@ -1,4 +1,5 @@
 import React from 'react';
+import { Brain, TrendingUp, Search } from 'lucide-react';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -7,9 +8,9 @@ interface TabNavigationProps {
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: 'brand-brain', label: 'Brand Brain' },
-    { id: 'trend-engine', label: 'Trend Engine' },
-    { id: 'design-auditor', label: 'Design Auditor' },
+    { id: 'brand-brain', label: 'Brand Brain', icon: Brain },
+    { id: 'trend-engine', label: 'Trend Engine', icon: TrendingUp },
+    { id: 'design-auditor', label: 'Design Auditor', icon: Search },
   ];
 
   return (
@@ -22,6 +23,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
+        const IconComponent = tab.icon;
         return (
           <button
             key={tab.id}
@@ -33,14 +35,18 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
               fontWeight: isActive ? 700 : 400,
               fontFamily: 'adobe-clean, sans-serif',
               backgroundColor: isActive ? 'var(--spectrum-background-layer-2)' : 'transparent',
-              color: isActive ? 'var(--spectrum-accent-color-400)' : 'var(--spectrum-text-secondary)',
+              color: isActive ? '#00719f' : 'var(--spectrum-text-secondary)',
               border: 'none',
               borderBottom: isActive 
-                ? '2px solid var(--spectrum-accent-color-400)' 
+                ? '2px solid #00719f' 
                 : '2px solid transparent',
               cursor: 'pointer',
               transition: 'all 0.13s ease-out',
               outline: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
             }}
             onMouseEnter={(e) => {
               if (!isActive) {
@@ -55,12 +61,13 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
               }
             }}
             onFocus={(e) => {
-              e.currentTarget.style.boxShadow = 'inset 0 0 0 2px var(--spectrum-border-color-focus)';
+              e.currentTarget.style.boxShadow = 'inset 0 0 0 2px #00719f';
             }}
             onBlur={(e) => {
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
+            <IconComponent size={16} />
             {tab.label}
           </button>
         );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBrand } from '../../context/BrandContext';
 import { groqClient } from '../../services/GroqClient';
+import { Brain, Link, FileText, Sparkles, Palette, MessageSquare, CheckSquare, Ruler } from 'lucide-react';
 
 const BrandBrain: React.FC = () => {
   const [url, setUrl] = useState('');
@@ -122,25 +123,8 @@ const BrandBrain: React.FC = () => {
 
   return (
     <div style={{ padding: 'var(--spectrum-spacing-400)', fontFamily: 'adobe-clean, sans-serif' }}>
-      <h2 style={{ 
-        fontSize: 'var(--spectrum-heading-xl-text-size)', 
-        fontWeight: 700,
-        color: 'var(--spectrum-heading-color)',
-        margin: '0 0 var(--spectrum-spacing-200) 0'
-      }}>
-        🧠 Brand Brain
-      </h2>
-      <p style={{ 
-        fontSize: 'var(--spectrum-body-s-text-size)',
-        color: 'var(--spectrum-body-color)',
-        marginBottom: 'var(--spectrum-spacing-400)',
-        lineHeight: 1.6
-      }}>
-        Extract brand colors, voice, and design guidelines from any website URL or paste brand text directly.
-      </p>
-
       {/* Toggle between URL and Manual input */}
-      <div style={{ marginBottom: 'var(--spectrum-spacing-300)', display: 'flex', gap: 'var(--spectrum-spacing-200)' }}>
+      <div style={{ marginBottom: 'var(--spectrum-spacing-300)', display: 'flex', gap: 'var(--spectrum-spacing-200)', justifyContent: 'center' }}>
         <button
           onClick={() => setUseManualInput(false)}
           style={{
@@ -148,14 +132,15 @@ const BrandBrain: React.FC = () => {
             fontSize: 'var(--spectrum-body-xs-text-size)',
             fontWeight: 600,
             fontFamily: 'adobe-clean, sans-serif',
-            backgroundColor: !useManualInput ? '#FA0' : 'var(--spectrum-gray-200)',
-            color: !useManualInput ? '#000' : 'var(--spectrum-gray-700)',
+            backgroundColor: !useManualInput ? '#4069FD' : 'var(--spectrum-gray-200)',
+            color: !useManualInput ? '#fff' : 'var(--spectrum-gray-700)',
             border: 'none',
             borderRadius: 'var(--spectrum-corner-radius-100)',
             cursor: 'pointer',
             transition: 'all 0.13s ease-out',
           }}
         >
+          <Link size={14} style={{ marginRight: '4px' }} />
           From URL
         </button>
         <button
@@ -165,14 +150,15 @@ const BrandBrain: React.FC = () => {
             fontSize: 'var(--spectrum-body-xs-text-size)',
             fontWeight: 600,
             fontFamily: 'adobe-clean, sans-serif',
-            backgroundColor: useManualInput ? '#FA0' : 'var(--spectrum-gray-200)',
-            color: useManualInput ? '#000' : 'var(--spectrum-gray-700)',
+            backgroundColor: useManualInput ? '#4069FD' : 'var(--spectrum-gray-200)',
+            color: useManualInput ? '#fff' : 'var(--spectrum-gray-700)',
             border: 'none',
             borderRadius: 'var(--spectrum-corner-radius-100)',
             cursor: 'pointer',
             transition: 'all 0.13s ease-out',
           }}
         >
+          <FileText size={14} style={{ marginRight: '4px' }} />
           Paste Text
         </button>
       </div>
@@ -188,14 +174,6 @@ const BrandBrain: React.FC = () => {
         }}>
           Website URL
         </label>
-        <p style={{ 
-          fontSize: 'var(--spectrum-body-xs-text-size)',
-          color: 'var(--spectrum-gray-600)',
-          marginBottom: 'var(--spectrum-spacing-200)',
-          fontStyle: 'italic'
-        }}>
-          Note: Some sites block automated requests. If fetching fails, use "Paste Text" mode instead.
-        </p>
         <input
           type="url"
           value={url}
@@ -222,36 +200,44 @@ const BrandBrain: React.FC = () => {
           }}
         />
 
-        <button
-          onClick={handleExtract}
-          disabled={!url || loading}
-          style={{
-            marginTop: 'var(--spectrum-spacing-300)',
-            padding: 'var(--spectrum-spacing-200) var(--spectrum-spacing-400)',
-            fontSize: 'var(--spectrum-font-size-100)',
-            fontWeight: 600,
-            fontFamily: 'adobe-clean, sans-serif',
-            backgroundColor: loading ? 'var(--spectrum-gray-400)' : '#FA0',
-            color: '#000',
-            border: 'none',
-            borderRadius: 'var(--spectrum-corner-radius-100)',
-            cursor: loading || !url ? 'not-allowed' : 'pointer',
-            transition: 'all 0.13s ease-out',
-            opacity: loading || !url ? 0.5 : 1,
-          }}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spectrum-spacing-300)' }}>
+          <button
+            onClick={handleExtract}
+            disabled={!url || loading}
+            style={{
+              padding: 'var(--spectrum-spacing-200) var(--spectrum-spacing-400)',
+              fontSize: 'var(--spectrum-font-size-100)',
+              fontWeight: 600,
+              fontFamily: 'adobe-clean, sans-serif',
+              backgroundColor: loading ? 'var(--spectrum-gray-400)' : '#4069FD',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 'var(--spectrum-corner-radius-100)',
+              cursor: loading || !url ? 'not-allowed' : 'pointer',
+              transition: 'all 0.13s ease-out',
+              opacity: loading || !url ? 0.5 : 1,
+            }}
           onMouseEnter={(e) => {
             if (!loading && url) {
-              e.currentTarget.style.backgroundColor = '#FFB800';
+              e.currentTarget.style.backgroundColor = '#5078FE';
             }
           }}
           onMouseLeave={(e) => {
             if (!loading && url) {
-              e.currentTarget.style.backgroundColor = '#FA0';
+              e.currentTarget.style.backgroundColor = '#4069FD';
             }
           }}
         >
-          {loading ? '⏳ Extracting...' : '✨ Extract Brand Data'}
-        </button>
+          {loading ? (
+            <>Extracting...</>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <Sparkles size={16} />
+              Extract Brand Data
+            </span>
+          )}
+          </button>
+        </div>
       </div>
       ) : (
       <div style={{ marginBottom: 'var(--spectrum-spacing-400)' }}>
@@ -291,36 +277,44 @@ const BrandBrain: React.FC = () => {
           }}
         />
 
-        <button
-          onClick={handleManualExtract}
-          disabled={!manualText.trim() || loading}
-          style={{
-            marginTop: 'var(--spectrum-spacing-300)',
-            padding: 'var(--spectrum-spacing-200) var(--spectrum-spacing-400)',
-            fontSize: 'var(--spectrum-font-size-100)',
-            fontWeight: 600,
-            fontFamily: 'adobe-clean, sans-serif',
-            backgroundColor: loading ? 'var(--spectrum-gray-400)' : '#FA0',
-            color: '#000',
-            border: 'none',
-            borderRadius: 'var(--spectrum-corner-radius-100)',
-            cursor: loading || !manualText.trim() ? 'not-allowed' : 'pointer',
-            transition: 'all 0.13s ease-out',
-            opacity: loading || !manualText.trim() ? 0.5 : 1,
-          }}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spectrum-spacing-300)' }}>
+          <button
+            onClick={handleManualExtract}
+            disabled={!manualText.trim() || loading}
+            style={{
+              padding: 'var(--spectrum-spacing-200) var(--spectrum-spacing-400)',
+              fontSize: 'var(--spectrum-font-size-100)',
+              fontWeight: 600,
+              fontFamily: 'adobe-clean, sans-serif',
+              backgroundColor: loading ? 'var(--spectrum-gray-400)' : '#4069FD',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 'var(--spectrum-corner-radius-100)',
+              cursor: loading || !manualText.trim() ? 'not-allowed' : 'pointer',
+              transition: 'all 0.13s ease-out',
+              opacity: loading || !manualText.trim() ? 0.5 : 1,
+            }}
           onMouseEnter={(e) => {
             if (!loading && manualText.trim()) {
-              e.currentTarget.style.backgroundColor = '#FFB800';
+              e.currentTarget.style.backgroundColor = '#5078FE';
             }
           }}
           onMouseLeave={(e) => {
             if (!loading && manualText.trim()) {
-              e.currentTarget.style.backgroundColor = '#FA0';
+              e.currentTarget.style.backgroundColor = '#4069FD';
             }
           }}
         >
-          {loading ? '⏳ Extracting...' : '✨ Extract Brand Data'}
-        </button>
+          {loading ? (
+            <>Extracting...</>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <Sparkles size={16} />
+              Extract Brand Data
+            </span>
+          )}
+          </button>
+        </div>
       </div>
       )}
 
@@ -337,7 +331,7 @@ const BrandBrain: React.FC = () => {
             fontSize: 'var(--spectrum-body-s-text-size)',
             color: 'var(--spectrum-red-900)'
           }}>
-            ⚠️ {error}
+            {error}
           </p>
         </div>
       )}
@@ -353,9 +347,13 @@ const BrandBrain: React.FC = () => {
             fontSize: 'var(--spectrum-heading-l-text-size)',
             fontWeight: 700,
             color: 'var(--spectrum-heading-color)',
-            margin: '0 0 var(--spectrum-spacing-300) 0'
+            margin: '0 0 var(--spectrum-spacing-300) 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spectrum-spacing-200)'
           }}>
-            ✅ Brand Identity Extracted
+            <CheckSquare size={20} color="#00719f" />
+            Brand Identity Extracted
           </h3>
           
           {/* Primary Colors */}
@@ -364,9 +362,13 @@ const BrandBrain: React.FC = () => {
               fontSize: 'var(--spectrum-heading-m-text-size)',
               fontWeight: 600,
               color: 'var(--spectrum-heading-color)',
-              margin: '0 0 var(--spectrum-spacing-200) 0'
+              margin: '0 0 var(--spectrum-spacing-200) 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spectrum-spacing-100)'
             }}>
-              🎨 Primary Colors
+              <Palette size={18} color="#00719f" />
+              Primary Colors
             </h4>
             <div style={{ 
               display: 'flex', 
@@ -410,9 +412,13 @@ const BrandBrain: React.FC = () => {
                 fontSize: 'var(--spectrum-heading-m-text-size)',
                 fontWeight: 600,
                 color: 'var(--spectrum-heading-color)',
-                margin: '0 0 var(--spectrum-spacing-200) 0'
+                margin: '0 0 var(--spectrum-spacing-200) 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spectrum-spacing-100)'
               }}>
-                💬 Brand Voice
+                <MessageSquare size={18} color="#00719f" />
+                Brand Voice
               </h4>
               <p style={{ 
                 margin: 0,
@@ -436,9 +442,13 @@ const BrandBrain: React.FC = () => {
                 fontSize: 'var(--spectrum-heading-m-text-size)',
                 fontWeight: 600,
                 color: 'var(--spectrum-heading-color)',
-                margin: '0 0 var(--spectrum-spacing-200) 0'
+                margin: '0 0 var(--spectrum-spacing-200) 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spectrum-spacing-100)'
               }}>
-                📐 Design Guidelines
+                <Ruler size={18} color="#00719f" />
+                Design Guidelines
               </h4>
               <ul style={{ 
                 margin: 0,
