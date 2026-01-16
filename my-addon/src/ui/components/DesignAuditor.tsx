@@ -215,81 +215,27 @@ const DesignAuditor: React.FC = () => {
       {/* Premium Paywall */}
       {!checkingPremium && !isPremiumUser && (
         <div style={{
-          padding: 'var(--spectrum-spacing-600)',
+          padding: 'var(--spectrum-spacing-400)',
           backgroundColor: 'var(--spectrum-background-layer-2)',
-          borderRadius: 'var(--spectrum-corner-radius-200)',
-          border: '2px solid #FA0',
+          borderRadius: 'var(--spectrum-corner-radius-100)',
+          border: '1px solid var(--spectrum-border-color)',
           textAlign: 'center',
           marginBottom: 'var(--spectrum-spacing-400)',
         }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            backgroundColor: '#4069FD',
-            marginBottom: 'var(--spectrum-spacing-400)',
-          }}>
-            <Crown size={32} color="#fff" />
-          </div>
-          
-          <h2 className="spectrum-heading-l" style={{
-            margin: '0 0 var(--spectrum-spacing-200) 0',
-            color: 'var(--spectrum-heading-color)',
-          }}>
-            Premium Feature
-          </h2>
-          
           <p style={{
             fontSize: 'var(--spectrum-body-text-size)',
             color: 'var(--spectrum-body-color)',
-            lineHeight: 1.6,
-            marginBottom: 'var(--spectrum-spacing-400)',
-            maxWidth: '400px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
+            margin: '0 0 var(--spectrum-spacing-300) 0',
           }}>
-            Design Audit is a premium feature that uses advanced AI to analyze your designs against brand guidelines and provide actionable feedback.
+            Feature available to Express Pro users only
           </p>
-
-          <div style={{
-            backgroundColor: 'var(--spectrum-background-layer-1)',
-            borderRadius: 'var(--spectrum-corner-radius-100)',
-            padding: 'var(--spectrum-spacing-400)',
-            marginBottom: 'var(--spectrum-spacing-500)',
-            textAlign: 'left',
-          }}>
-            <p style={{
-              fontSize: 'var(--spectrum-body-s-text-size)',
-              color: 'var(--spectrum-body-color)',
-              fontWeight: 600,
-              marginBottom: 'var(--spectrum-spacing-200)',
-            }}>
-              What you'll get with Premium:
-            </p>
-            <ul style={{
-              margin: 0,
-              paddingLeft: 'var(--spectrum-spacing-400)',
-              fontSize: 'var(--spectrum-body-s-text-size)',
-              color: 'var(--spectrum-body-color)',
-              lineHeight: 1.8,
-            }}>
-              <li>AI-powered design analysis</li>
-              <li>Brand consistency scoring</li>
-              <li>Detailed recommendations</li>
-              <li>Accessibility insights</li>
-              <li>Typography & spacing evaluation</li>
-            </ul>
-          </div>
 
           <button
             onClick={handleUpgrade}
             style={{
-              padding: 'var(--spectrum-spacing-300) var(--spectrum-spacing-600)',
-              fontSize: 'var(--spectrum-font-size-200)',
-              fontWeight: 700,
+              padding: 'var(--spectrum-spacing-200) var(--spectrum-spacing-400)',
+              fontSize: 'var(--spectrum-body-s-text-size)',
+              fontWeight: 600,
               fontFamily: 'adobe-clean, sans-serif',
               backgroundColor: '#4069FD',
               color: '#fff',
@@ -297,9 +243,6 @@ const DesignAuditor: React.FC = () => {
               borderRadius: 'var(--spectrum-corner-radius-100)',
               cursor: 'pointer',
               transition: 'all 0.13s ease-out',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 'var(--spectrum-spacing-200)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#5078FE';
@@ -308,18 +251,8 @@ const DesignAuditor: React.FC = () => {
               e.currentTarget.style.backgroundColor = '#4069FD';
             }}
           >
-            <Crown size={18} />
-            Upgrade to Premium
+            Upgrade
           </button>
-
-          <p style={{
-            fontSize: 'var(--spectrum-body-xs-text-size)',
-            color: 'var(--spectrum-gray-600)',
-            marginTop: 'var(--spectrum-spacing-300)',
-            marginBottom: 0,
-          }}>
-            Unlock all premium features with Adobe Express Premium
-          </p>
         </div>
       )}
 
