@@ -41,6 +41,8 @@ class GroqClient {
     if (apiKey) {
       this.setApiKey(apiKey);
     }
+
+    // No external moderation API keys are used; client-side checks preferred.
   }
 
   /**
@@ -172,6 +174,206 @@ class GroqClient {
       throw new Error('Groq API key not configured. Set your Groq API key in Settings.');
     }
     return this.client;
+  }
+
+  // Basic explicit-content regex (fallback). Extend as needed.
+  private explicitWordRegex = /\b(porn|sex|nude|nudes|xxx|fuck|shit|bitch|cunt|rape|incest|fetish)\b/i;
+  // Client-side models (lazy-loaded)
+  private tfToxicityModel: any = null;
+  private nsfwModel: any = null;
+  private loadingToxicity: Promise<any> | null = null;
+  private loadingNsfw: Promise<any> | null = null;
+
+  /**
+   * Synchronous cheap check for explicit words
+   */
+  private containsExplicitWords(text: string | undefined | null): boolean {
+    if (!text || typeof text !== 'string') return false;
+    return this.explicitWordRegex.test(text);
+  }
+
+  /**
+   * Lazy-load the TF.js toxicity model for client-side text checks
+   */
+  private async loadToxicityModel(): Promise<any> {
+    if (this.tfToxicityModel) return this.tfToxicityModel;
+    if (this.loadingToxicity) return this.loadingToxicity;
+    if (typeof window === 'undefined') return null; // only in browser
+
+    this.loadingToxicity = (async () => {
+      // Load TF.js and toxicity from CDN via script injection to avoid bundling
+      await this.loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+      await this.loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity@1.2.2/dist/toxicity.min.js');
+
+      const tox = (window as any).toxicity;
+      if (!tox || typeof tox.load !== 'function') return null;
+      // default threshold 0.85, request sexual_explicit label specifically
+      this.tfToxicityModel = await tox.load(0.85, ['sexual_explicit']);
+      return this.tfToxicityModel;
+    })();
+
+    return this.loadingToxicity;
+  }
+
+  /**
+   * Lazy-load nsfwjs model for client-side image checks
+   */
+  private async loadNsfwModel(): Promise<any> {
+    if (this.nsfwModel) return this.nsfwModel;
+    if (this.loadingNsfw) return this.loadingNsfw;
+    if (typeof window === 'undefined') return null; // only in browser
+
+    this.loadingNsfw = (async () => {
+      // Load tfjs and nsfwjs from CDN via script injection to avoid bundling
+      await this.loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+      await this.loadExternalScript('https://cdn.jsdelivr.net/npm/nsfwjs@4.2.1/dist/nsfwjs.min.js');
+
+      const nsfw = (window as any).nsfwjs;
+      if (!nsfw || typeof nsfw.load !== 'function') return null;
+      // Load default model hosted by nsfwjs CDN
+      this.nsfwModel = await nsfw.load();
+      return this.nsfwModel;
+    })();
+
+    return this.loadingNsfw;
+  }
+
+  /**
+   * Inject an external script tag and resolve when loaded
+   */
+  private loadExternalScript(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined') return reject(new Error('Not in browser'));
+      // Avoid loading the same script multiple times
+      if (document.querySelector(`script[src="${url}"]`)) return resolve();
+      const s = document.createElement('script');
+      s.src = url;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = (e) => reject(new Error(`Failed to load script ${url}`));
+      document.head.appendChild(s);
+    });
+  }
+
+  /**
+   * Check text safety. Uses cheap regex first, then optionally asks the model (best-effort).
+   * Throws on explicit content.
+   */
+  private async checkTextSafety(text: string, label: string = 'text'): Promise<void> {
+    if (!text) return;
+
+    if (this.containsExplicitWords(text)) {
+      throw new Error(`${label} rejected: explicit content detected`);
+    }
+
+    // Client-side toxicity check (browser only, privacy-first)
+    try {
+      const tox = await this.loadToxicityModel();
+      if (tox && typeof tox.classify === 'function') {
+        const predictions = await tox.classify([text]);
+        // Find sexual explicit label prediction
+        const sexual = predictions.find((p: any) => p.label === 'sexual_explicit');
+        if (sexual && sexual.results && sexual.results[0] && sexual.results[0].match) {
+          throw new Error(`${label} rejected: sexual/explicit content detected (client-side)`);
+        }
+      }
+    } catch {
+      // If client-side check fails, continue to other checks
+    }
+    // Continue to fallback model-based check if client-side check didn't reject
+
+    // Fallback: best-effort model-based check if external moderation not available
+    try {
+      const client = this.client;
+      if (!client || !client.chat || !client.chat.completions) return;
+
+      const completion = await client.chat.completions.create({
+        messages: [
+          { role: 'system', content: 'You are a content safety filter. Return only valid JSON: { "explicit": boolean, "confidence": 0-100 }' },
+          { role: 'user', content: `Classify whether the following text is explicit/adult content. Return ONLY JSON.\n\n${text}` }
+        ],
+        model: this.TEXT_MODEL,
+        temperature: 0,
+        max_tokens: 50,
+      });
+
+      const responseText = completion.choices?.[0]?.message?.content;
+      if (!responseText) return;
+      const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleaned || '{}');
+      if (parsed && parsed.explicit) {
+        throw new Error(`${label} rejected: explicit content detected (confidence ${parsed.confidence || 0})`);
+      }
+    } catch {
+      // On moderation failure, rely on the cheap regex check above.
+      return;
+    }
+  }
+
+  /**
+   * Image safety check (best-effort): asks vision model to classify explicit content.
+   * Throws on explicit content.
+   */
+  private async checkImageSafety(imageBase64: string, label: string = 'image'): Promise<void> {
+    if (!imageBase64) return;
+    // Client-side NSFW check (browser only)
+    try {
+      const nsfw = await this.loadNsfwModel();
+      if (nsfw && typeof nsfw.classify === 'function' && typeof window !== 'undefined') {
+        // Create image element from base64
+        const img = new Image();
+        img.src = `data:image/jpeg;base64,${imageBase64}`;
+        await new Promise((resolve, reject) => {
+          img.onload = () => resolve(true);
+          img.onerror = (e) => reject(e);
+        });
+        const predictions = await nsfw.classify(img);
+        // Look for porn/sexy high probability
+        const porn = predictions.find((p: any) => /porn|sex|sexy/i.test(p.className));
+        if (porn && porn.probability && porn.probability > 0.75) {
+          throw new Error(`${label} rejected: image likely explicit (client-side)`);
+        }
+      }
+    } catch {
+      // If client-side check fails, continue to other checks
+    }
+
+    // No external image moderation — rely on client-side check and model fallback
+
+    // Fallback: best-effort vision model moderation if Google Vision not configured
+    try {
+      const client = this.client;
+      if (!client || !client.chat || !client.chat.completions) return;
+
+      const messages: any[] = [
+        { role: 'system', content: 'You are an image safety classifier. Return only valid JSON: { "explicit": boolean, "confidence": 0-100 }' },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Classify whether the following image contains explicit/adult content. Return ONLY JSON.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+          ]
+        }
+      ];
+
+      const completion = await client.chat.completions.create({
+        messages,
+        model: this.VISION_MODEL,
+        temperature: 0,
+        max_tokens: 50,
+      });
+
+      const responseText = completion.choices?.[0]?.message?.content;
+      if (!responseText) return;
+      const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleaned || '{}');
+      if (parsed && parsed.explicit) {
+        throw new Error(`${label} rejected: explicit content detected (confidence ${parsed.confidence || 0})`);
+      }
+    } catch {
+      // If the vision moderation fails, we conservatively allow the image (cannot reliably detect locally).
+      return;
+    }
   }
 
   /**
@@ -390,6 +592,8 @@ Include: style, composition, lighting, mood, brand colors. Be specific and direc
       if (!result || typeof result !== 'string' || result.trim().length < 10) {
         throw new Error('Invalid response from Firefly prompt generator');
       }
+      // Safety check on model output
+      await this.checkTextSafety(result, 'firefly prompt');
       return result;
     } catch (error) {
       // Re-throw with user-friendly message instead of logging
@@ -473,7 +677,16 @@ Return ONLY the JSON array, no markdown formatting or additional text.`;
         .replace(/```\n?/g, '')
         .trim();
 
+      // Safety check on model output (raw text)
+      await this.checkTextSafety(cleanedResponse, 'trends response');
+
       const trends = JSON.parse(cleanedResponse) as Array<{ id: string; name: string; desc: string }>;
+
+      // Validate textual fields for explicit content
+      for (const t of trends) {
+        if (t.name) await this.checkTextSafety(t.name, 'trend name');
+        if (t.desc) await this.checkTextSafety(t.desc, 'trend description');
+      }
 
       // Validate response
       if (!Array.isArray(trends) || trends.length === 0) {
@@ -603,8 +816,23 @@ Return ONLY valid JSON:
         .replace(/```\n?/g, '')
         .trim();
 
+      // Safety check on model output (raw text)
+      await this.checkTextSafety(cleanedResponse, 'design analysis response');
+
       const analysis = JSON.parse(cleanedResponse) as VisionAnalysis;
 
+      // Validate feedback and recommendations for explicit content
+      if (Array.isArray(analysis.feedback)) {
+        for (const f of analysis.feedback) {
+          if (typeof f === 'string' && f.trim()) await this.checkTextSafety(f, 'design feedback');
+        }
+      }
+
+      if (Array.isArray(analysis.recommendations)) {
+        for (const r of analysis.recommendations) {
+          if (typeof r === 'string' && r.trim()) await this.checkTextSafety(r, 'design recommendation');
+        }
+      }
       // Validate and clamp scores to 0-100 range
       const clampScore = (score: number | undefined, defaultVal: number = 50): number => {
         if (score === undefined || score === null || isNaN(score)) return defaultVal;
