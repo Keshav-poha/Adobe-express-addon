@@ -1,7 +1,7 @@
 {
     "testId": "a92aa6c0-c178-488a-b976-a42d3bb2c1cb",
     "name": "Pixel Pluck",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "manifestVersion": 2,
     "summary": "AI-powered brand analysis and design prompt generation.",
     "description": "Extract brand identity from websites, generate Firefly prompts, and audit designs against brand guidelines. Requires a Groq API key configured in Settings for AI features.",
